@@ -1,0 +1,24 @@
+<!-- templates/update.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Update Data</title>
+</head>
+<body>
+    <h1>Update Data</h1>
+    <form action="" method="POST">
+        <!-- title 입력란을 읽기 전용으로 설정 -->
+        <p><input type="text" name="title" placeholder="title" value="{{ data[0] }}" readonly></p>
+        <p><input type="password" name="password" placeholder="password" value="{{ data[1] }}"></p>
+        <p><input type="text" name="name" placeholder="name" value="{{ data[2] }}"></p>
+        <p><input type="text" name="role" placeholder="role" value="{{ data[3] }}"></p>
+        <p><input type="submit" value="Update"></p>
+    </form>
+    <form action="/delete/" method="POST">
+        <input type="hidden" name="title" value="{{ data[0] }}">
+        <input type="submit" value="Delete">
+    </form>
+    <br>
+    <a href="/select/">돌아가기</a>
+</body>
+</html>
