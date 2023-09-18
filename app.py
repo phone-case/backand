@@ -53,6 +53,7 @@ def insert():
         <form action="/create/" method="POST">
             <p><input type="text" name="title" placeholder="title"></p>
             <p><input type="password" name="password" placeholder="password"></p>
+            <p><input type="confirm_password" name="confirm_password" placeholder="confirm_password"></p>
             <p><input type="text" name="name" placeholder="name"></p>
             <p><input type="text" name="role" placeholder="role"></p>
             <p><input type="submit" value="create"></p>
@@ -65,19 +66,24 @@ def create():
     # 폼 데이터 가져오기
     title = request.form.get('title')
     password = request.form.get('password')
+    confirm_password = request.form.get('confirm_password')
     name = request.form.get('name')
     role = request.form.get('role')
     print(title, password, name, role)
 
-    # MySQL 쿼리 실행
-    # cursor = db.cursor()  # 이 부분을 주석 처리 또는 제거
-    sql = "INSERT INTO test (id, password, name, role) VALUES (%s, %s, %s, %s)"
-    val = (title, password, name, role)
-    cursor.execute(sql, val)
-    db.commit()
-    # cursor.close()  # 이 부분을 주석 처리 또는 제거
+    if password != confirm_password:
+        return "비밀번호가 일치하지 않습니다."
+    else :
 
-    return '<a href="/select/">보러가기</a>'
+        # MySQL 쿼리 실행
+        # cursor = db.cursor()  # 이 부분을 주석 처리 또는 제거
+        sql = "INSERT INTO test (id, password, name, role) VALUES (%s, %s, %s, %s)"
+        val = (title, password, name, role)
+        cursor.execute(sql, val)
+        db.commit()
+        # cursor.close()  # 이 부분을 주석 처리 또는 제거
+
+        return '<a href="/select/">보러가기</a>'
 
 @app.route('/update/<id>', methods=['GET', 'POST'])
 def update(id):
