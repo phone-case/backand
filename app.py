@@ -1,9 +1,10 @@
 from flask import Flask, request, render_template, redirect, url_for
+from flask_cors import CORS
 import pymysql
 
 
 app = Flask(__name__)
-
+CORS(app, resources={r"/create/*": {"origins": "http://127.0.0.1:3000"}})
 db = pymysql.connect(host='127.0.0.1', user='root', password='1234', db='hyotaedb', charset='utf8')
 # 데이터에 접근
 cursor = db.cursor()
