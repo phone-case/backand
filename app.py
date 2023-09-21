@@ -94,6 +94,7 @@ def get_name():
     except Exception as e:
         return jsonify({'error': str(e)})
 
+
 @app.route('/create/', methods=['POST'])
 def create():
     # 폼 데이터 가져오기
@@ -105,7 +106,7 @@ def create():
     print(title, password, name, role)
 
     if password != confirm_password:
-        return "비밀번호가 일치하지 않습니다."
+        return "<a href='http://localhost:3000'>비밀번호가 일치하지 않습니다</a>"
     else :
 
         # MySQL 쿼리 실행
