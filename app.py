@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, url_for
+from flask import *
 from flask_cors import CORS
 import pymysql
 
@@ -48,19 +48,51 @@ def select():
 
     return render_template('select.html', name=name)
 
-@app.route('/insert/')
-def insert():
-    inserts = '''
-        <form action="/create/" method="POST">
-            <p><input type="text" name="title" placeholder="title"></p>
-            <p><input type="password" name="password" placeholder="password"></p>
-            <p><input type="confirm_password" name="confirm_password" placeholder="confirm_password"></p>
-            <p><input type="text" name="name" placeholder="name"></p>
-            <p><input type="text" name="role" placeholder="role"></p>
-            <p><input type="submit" value="create"></p>
-        </form>
-    '''
-    return inserts
+@app.route('/api/data', methods=['GET'])
+def get_data():
+    try:
+        # MySQL에서 데이터를 가져오는 쿼리 실행
+        sql = "SELECT * FROM test"
+        cursor.execute(sql)
+        results = cursor.fetchall()
+
+        # 데이터를 JSON 형식으로 변환
+        data = []
+        for row in results:
+            item = {
+                'id': row[0],
+                'password': row[1],
+                'name': row[2],
+                'role': row[3]
+            }
+            data.append(item)
+
+        return jsonify(data)
+
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+@app.route('/api/get_name', methods=['GET'])
+def get_name():
+    try:
+        # 아이디와 비밀번호를 GET 요청에서 가져옴
+        id = request.args.get('id')
+        password = request.args.get('password')
+
+        # 사용자를 찾는 쿼리 실행 (예시)
+        sql = "SELECT name FROM test WHERE id = %s AND password = %s"
+        cursor.execute(sql, (id, password))
+        result = cursor.fetchone()
+
+        if result:
+            name = result[0]
+        else:
+            name = None
+
+        return jsonify({'name': name})
+
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 @app.route('/create/', methods=['POST'])
 def create():
@@ -84,7 +116,7 @@ def create():
         db.commit()
         # cursor.close()  # 이 부분을 주석 처리 또는 제거
 
-        return '<a href="/select/">보러가기</a>'
+        return redirect("http://localhost:3000")
 
 @app.route('/update/<id>', methods=['GET', 'POST'])
 def update(id):
