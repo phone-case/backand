@@ -102,8 +102,7 @@ def create():
     password = request.form.get('password')
     confirm_password = request.form.get('confirm_password')
     name = request.form.get('name')
-    role = request.form.get('role')
-    print(title, password, name, role)
+    print(title, password, name)
 
     if password != confirm_password:
         return "<a href='http://localhost:3000'>비밀번호가 일치하지 않습니다</a>"
@@ -111,8 +110,8 @@ def create():
 
         # MySQL 쿼리 실행
         # cursor = db.cursor()  # 이 부분을 주석 처리 또는 제거
-        sql = "INSERT INTO test (id, password, name, role) VALUES (%s, %s, %s, %s)"
-        val = (title, password, name, role)
+        sql = "INSERT INTO test (id, password, name) VALUES (%s, %s, %s)"
+        val = (title, password, name)
         cursor.execute(sql, val)
         db.commit()
         # cursor.close()  # 이 부분을 주석 처리 또는 제거
