@@ -4,7 +4,7 @@ import pymysql
 
 
 app = Flask(__name__)
-CORS(app, resources={r"/create/*": {"origins": "http://127.0.0.1:3000"}})
+CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
 db = pymysql.connect(host='127.0.0.1', user='root', password='1234', db='hyotaedb', charset='utf8')
 # 데이터에 접근
 cursor = db.cursor()
@@ -33,59 +33,22 @@ def data():
 def hello():
     return render_template('hello.html')
 
-@app.route('/select/')
-def select():
-    # SQL query 작성
-    sql = "SELECT * FROM test"
-
-    # SQL query 실행
-    cursor.execute(sql)
-
-    name = cursor.fetchall()
-
-    # Database 닫기 (주석 처리 또는 제거)
-    # db.close()
-
-    return render_template('select.html', name=name)
-
-@app.route('/api/data', methods=['GET'])
-def get_data():
-    try:
-        # MySQL에서 데이터를 가져오는 쿼리 실행
-        sql = "SELECT * FROM test"
-        cursor.execute(sql)
-        results = cursor.fetchall()
-
-        # 데이터를 JSON 형식으로 변환
-        data = []
-        for row in results:
-            item = {
-                'id': row[0],
-                'password': row[1],
-                'name': row[2],
-                'role': row[3]
-            }
-            data.append(item)
-
-        return jsonify(data)
-
-    except Exception as e:
-        return jsonify({'error': str(e)})
-
-@app.route('/api/get_name', methods=['GET'])
+@app.route('/api/get_name', methods=['POST'])
 def get_name():
     try:
-        # 아이디와 비밀번호를 GET 요청에서 가져옴
-        id = request.args.get('id')
-        password = request.args.get('password')
+        # 클라이언트에서 JSON 형식으로 전송한 데이터를 추출
+        data = request.get_json()
+        id = data.get('email')
+        password = data.get('password')
 
-        # 사용자를 찾는 쿼리 실행 (예시)
+        # 사용자를 찾는 쿼리 실행
         sql = "SELECT name FROM test WHERE id = %s AND password = %s"
         cursor.execute(sql, (id, password))
         result = cursor.fetchone()
 
         if result:
             name = result[0]
+            print(name)
         else:
             name = None
 
@@ -95,7 +58,7 @@ def get_name():
         return jsonify({'error': str(e)})
 
 
-@app.route('/create/', methods=['POST'])
+@app.route('/api/create/', methods=['POST'])
 def create():
     # 폼 데이터 가져오기
     title = request.form.get('title')
@@ -117,53 +80,6 @@ def create():
         # cursor.close()  # 이 부분을 주석 처리 또는 제거
 
         return redirect("http://localhost:3000")
-
-@app.route('/update/<id>', methods=['GET', 'POST'])
-def update(id):
-    if request.method == 'POST':
-        # 폼 데이터 가져오기
-        title = request.form.get('title')
-        password = request.form.get('password')
-        name = request.form.get('name')
-        role = request.form.get('role')
-        print(title, password, name, role)
-
-        # MySQL 쿼리 실행 (id를 기준으로 업데이트)
-        sql = "UPDATE test SET password=%s, name=%s, role=%s WHERE id=%s"
-        val = (password, name, role, title)
-        cursor.execute(sql, val)
-        db.commit()
-
-        return redirect(url_for('select'))  # 업데이트 후 다시 목록 페이지로 리다이렉트
-
-
-
-    sql = "SELECT * FROM test WHERE id = %s"
-    cursor.execute(sql, (id,))
-    data = cursor.fetchone()
-
-    return render_template('update.html', data=data)
-
-@app.route('/delete/', methods=['POST'])
-def delete():
-    # POST 요청에서 title 값을 가져옵니다.
-    title = request.form.get('title')
-
-    # 삭제를 수행하는 SQL 쿼리
-    sql = "DELETE FROM test WHERE id = %s"  # 예를 들어, id 대신 title을 사용
-    cursor.execute(sql, (title,))
-    db.commit()
-
-    return redirect(url_for('select'))  # 삭제 후 다시 목록 페이지로 리다이렉트
-
-
-
-
-@app.route('/myHobby/')
-def myHobby():
-    return render_template('myHobby.html')
-
-
 
 if __name__ == '__main__':
     app.run(debug=True)
