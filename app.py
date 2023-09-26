@@ -61,11 +61,11 @@ def get_name():
 @app.route('/api/create/', methods=['POST'])
 def create():
     # 폼 데이터 가져오기
-    title = request.form.get('title')
+    id = request.form.get('id')
     password = request.form.get('password')
     confirm_password = request.form.get('confirm_password')
     name = request.form.get('name')
-    print(title, password, name)
+    print(id, password, name)
 
     if password != confirm_password:
         return "<a href='http://localhost:3000'>비밀번호가 일치하지 않습니다</a>"
@@ -74,12 +74,23 @@ def create():
         # MySQL 쿼리 실행
         # cursor = db.cursor()  # 이 부분을 주석 처리 또는 제거
         sql = "INSERT INTO test (id, password, name) VALUES (%s, %s, %s)"
-        val = (title, password, name)
+        val = (id, password, name)
         cursor.execute(sql, val)
         db.commit()
         # cursor.close()  # 이 부분을 주석 처리 또는 제거
 
         return redirect("http://localhost:3000")
+
+@app.route('/api/check_username/<username>', methods=['GET'])
+def check_username(username):
+    # 데이터베이스에서 입력받은 아이디가 이미 사용 중인지 확인
+    sql = "SELECT id FROM test WHERE id = %s"
+    cursor.execute(sql, (username,))
+    result = cursor.fetchone()
+
+    # 결과를 JSON 형태로 반환
+    is_taken = result is not None
+    return jsonify({'isTaken': is_taken})
 
 if __name__ == '__main__':
     app.run(debug=True)
