@@ -79,7 +79,7 @@ def create():
         db.commit()
         # cursor.close()  # 이 부분을 주석 처리 또는 제거
 
-        return redirect("http://localhost:3000")
+        return redirect("http://localhost:3000/login")
 
 @app.route('/api/check_username/<username>', methods=['GET'])
 def check_username(username):
