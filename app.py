@@ -92,5 +92,39 @@ def check_username(username):
     is_taken = result is not None
     return jsonify({'isTaken': is_taken})
 
+@app.route('/api/upload', methods=['POST'])
+def upload():
+    if 'image' in request.files:
+        image = request.files['image']  # 이미지 파일
+        image_name = request.form.get('imageName')  # 이미지 이름
+
+        # 이미지 데이터를 MySQL에 저장하거나 다른 작업 수행
+        if image and image_name:
+            try:
+                cursor.execute("INSERT INTO images (title, data) VALUES (%s, %s)", (image_name, image.read()))
+                db.commit()
+                
+                return 'Image uploaded successfully'
+            except Exception as e:
+                db.rollback()
+                return 'Error uploading image'
+
+    return 'No image provided for upload'
+
+@app.route('/images/<image_id>', methods=['GET'])
+def get_image(image_id):
+    try:
+        with db.cursor() as cursor:
+            cursor.execute("SELECT data FROM images WHERE title = %s", (image_id))
+            image_data = cursor.fetchone()
+
+            if image_data:
+                response = Response(image_data[0], content_type='image/jpg')  # 이미지 타입에 따라 변경
+                return response
+            else:
+                return 'Image not found', 404
+    except Exception as e:
+        return 'Error:', str(e)
+
 if __name__ == '__main__':
     app.run(debug=True)
