@@ -111,6 +111,17 @@ def upload():
 
     return 'No image provided for upload'
 
+@app.route('/api/check_imagename/<imagename>', methods=['GET'])
+def check_imagename(imagename):
+    # 데이터베이스에서 입력받은 이미지 이름이 이미 사용 중인지 확인
+    sql = "SELECT title FROM images WHERE title = %s"
+    cursor.execute(sql, (imagename,))
+    result = cursor.fetchone()
+
+    # 결과를 JSON 형태로 반환
+    is_taken = result is not None
+    return jsonify({'isTaken': is_taken})
+
 @app.route('/images/<image_id>', methods=['GET'])
 def get_image(image_id):
     try:
