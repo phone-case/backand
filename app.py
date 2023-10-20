@@ -30,6 +30,21 @@ def data():
 
     return
 
+#대현 이미지 반환
+@app.route('/api/getImage/<title>', methods=['GET'])
+def get__image(title):
+    try:
+        cursor.execute("SELECT data FROM images WHERE title = %s", (title,))
+        image_data = cursor.fetchone()
+
+        if image_data:
+            image_binary = image_data[0]
+            return send_file(io.BytesIO(image_binary), mimetype='image/png')  # 이미지 타입에 따라 변경
+        else:
+            return jsonify({'error': 'Image not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500  # 내부 서버 오류 (500)을 반환합니다
+
 @app.route('/')
 def hello():
     return render_template('hello.html')
