@@ -1,5 +1,6 @@
 from flask import *
 from flask_cors import CORS
+import io
 import pymysql
 
 
@@ -111,6 +112,22 @@ def upload():
 
     return 'No image provided for upload'
 
+@app.route('/api/submit_text', methods=['POST'])
+def submit_text():
+    if request.method == 'POST':
+        try:
+            content = request.json.get('content')
+
+            # 여기서 content 변수에 클라이언트로부터 받은 텍스트 데이터가 들어 있습니다.
+            # 원하는 대로 이 데이터를 처리하고 응답을 생성합니다.
+            print(content)
+
+            return jsonify({'message': '텍스트 데이터가 성공적으로 처리되었습니다.'+content})
+
+        except Exception as e:
+            return jsonify({'error': '텍스트 데이터 처리 중 오류가 발생했습니다.'})
+
+
 @app.route('/api/check_imagename/<imagename>', methods=['GET'])
 def check_imagename(imagename):
     # 데이터베이스에서 입력받은 이미지 이름이 이미 사용 중인지 확인
@@ -123,7 +140,7 @@ def check_imagename(imagename):
     return jsonify({'isTaken': is_taken})
 
 @app.route('/images/<image_id>', methods=['GET'])
-def get_image(image_id):
+def upload_image(image_id):
     try:
         with db.cursor() as cursor:
             cursor.execute("SELECT data FROM images WHERE title = %s", (image_id))
@@ -136,6 +153,29 @@ def get_image(image_id):
                 return 'Image not found', 404
     except Exception as e:
         return 'Error:', str(e)
+
+@app.route('/api/get_image', methods=['POST'])
+def get_image():
+    try:
+        # 클라이언트로부터 텍스트를 받습니다.
+        data = request.get_json()
+        text = data.get('imageName')
+
+        # 텍스트를 기반으로 이미지 데이터를 데이터베이스에서 가져옵니다.
+        cursor = db.cursor()
+        
+        cursor.execute("SELECT data FROM images WHERE title = %s", (text,))
+        result = cursor.fetchone()
+
+        if result:
+            image_data = result[0]
+            # 이미지 데이터를 클라이언트로 전송
+            return send_file(io.BytesIO(image_data), mimetype='image/jpeg')  # 이미지의 MIME 타입에 따라 변경
+
+    except Exception as e:
+        print('Error:', str(e))
+
+    return 'Image not found', 404
 
 if __name__ == '__main__':
     app.run(debug=True)
