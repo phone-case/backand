@@ -1,7 +1,10 @@
 from flask import *
 from flask_cors import CORS
-import io
+#from make_image import makeimage
+from image_module import *
+from base64 import b64encode
 import pymysql
+
 
 
 app = Flask(__name__)
@@ -58,7 +61,7 @@ def get_name():
         password = data.get('password')
 
         # 사용자를 찾는 쿼리 실행
-        sql = "SELECT name FROM test WHERE id = %s AND password = %s"
+        sql = "SELECT name from login WHERE id = %s AND password = %s"
         cursor.execute(sql, (id, password))
         result = cursor.fetchone()
 
@@ -89,7 +92,7 @@ def create():
 
         # MySQL 쿼리 실행
         # cursor = db.cursor()  # 이 부분을 주석 처리 또는 제거
-        sql = "INSERT INTO test (id, password, name) VALUES (%s, %s, %s)"
+        sql = "INSERT INTO login (id, password, name) VALUES (%s, %s, %s)"
         val = (id, password, name)
         cursor.execute(sql, val)
         db.commit()
@@ -100,7 +103,7 @@ def create():
 @app.route('/api/check_username/<username>', methods=['GET'])
 def check_username(username):
     # 데이터베이스에서 입력받은 아이디가 이미 사용 중인지 확인
-    sql = "SELECT id FROM test WHERE id = %s"
+    sql = "SELECT id FROM login WHERE id = %s"
     cursor.execute(sql, (username,))
     result = cursor.fetchone()
 
@@ -113,11 +116,12 @@ def upload():
     if 'image' in request.files:
         image = request.files['image']  # 이미지 파일
         image_name = request.form.get('imageName')  # 이미지 이름
+        imgae_text = request.form.get('imageText') 
 
         # 이미지 데이터를 MySQL에 저장하거나 다른 작업 수행
         if image and image_name:
             try:
-                cursor.execute("INSERT INTO images (title, data) VALUES (%s, %s)", (image_name, image.read()))
+                cursor.execute("INSERT INTO images (title, text, data) VALUES (%s, %s, %s)", (image_name, imgae_text, image.read()))
                 db.commit()
                 
                 return 'Image uploaded successfully'
@@ -136,8 +140,25 @@ def submit_text():
             # 여기서 content 변수에 클라이언트로부터 받은 텍스트 데이터가 들어 있습니다.
             # 원하는 대로 이 데이터를 처리하고 응답을 생성합니다.
             print(content)
+            eng_text = to_eng(content)
+            print(eng_text)
+            return jsonify(searchimage(eng_text))
 
-            return jsonify({'message': '텍스트 데이터가 성공적으로 처리되었습니다.'+content})
+        except Exception as e:
+            return jsonify({'error': '텍스트 데이터 처리 중 오류가 발생했습니다.'})
+
+@app.route('/api/create_text', methods=['POST'])
+def create_text():
+    if request.method == 'POST':
+        try:
+            content = request.json.get('content')
+
+            # 여기서 content 변수에 클라이언트로부터 받은 텍스트 데이터가 들어 있습니다.
+            # 원하는 대로 이 데이터를 처리하고 응답을 생성합니다.
+            print(content)
+            eng_text = to_eng(content)
+            print(eng_text)
+            return jsonify(create_image(eng_text))
 
         except Exception as e:
             return jsonify({'error': '텍스트 데이터 처리 중 오류가 발생했습니다.'})
@@ -154,21 +175,6 @@ def check_imagename(imagename):
     is_taken = result is not None
     return jsonify({'isTaken': is_taken})
 
-@app.route('/images/<image_id>', methods=['GET'])
-def upload_image(image_id):
-    try:
-        with db.cursor() as cursor:
-            cursor.execute("SELECT data FROM images WHERE title = %s", (image_id))
-            image_data = cursor.fetchone()
-
-            if image_data:
-                response = Response(image_data[0], content_type='image/jpg')  # 이미지 타입에 따라 변경
-                return response
-            else:
-                return 'Image not found', 404
-    except Exception as e:
-        return 'Error:', str(e)
-
 @app.route('/api/get_image', methods=['POST'])
 def get_image():
     try:
@@ -179,13 +185,25 @@ def get_image():
         # 텍스트를 기반으로 이미지 데이터를 데이터베이스에서 가져옵니다.
         cursor = db.cursor()
         
-        cursor.execute("SELECT data FROM images WHERE title = %s", (text,))
+        cursor.execute("SELECT data, text FROM images WHERE title = %s", (text,))
         result = cursor.fetchone()
 
         if result:
             image_data = result[0]
-            # 이미지 데이터를 클라이언트로 전송
-            return send_file(io.BytesIO(image_data), mimetype='image/jpeg')  # 이미지의 MIME 타입에 따라 변경
+            text_data = result[1]
+
+            # Encode image_data to Base64
+            encoded_image = b64encode(image_data).decode()
+
+            # 이미지 데이터와 텍스트 데이터를 클라이언트로 전송
+            response_data = {
+                'image_data': encoded_image,
+                'text_data': text_data
+            }
+
+            return jsonify(response_data)
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
     except Exception as e:
         print('Error:', str(e))
