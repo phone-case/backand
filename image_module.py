@@ -51,7 +51,7 @@ def searchimage(text):
     time.sleep(3)
     
     
-    xpath_pattern = '/html/body/div/div[2]/div/div[2]/div[7]/div/div[{}]/div/a/img'
+    xpath_pattern = '/html/body/div/div[2]/div/div[2]/div[6]/div/div[{}]/div/a/img'
     
     start_image_count = random.randint(1, 10)
     
